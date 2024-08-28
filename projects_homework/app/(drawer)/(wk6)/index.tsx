@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View, ProgressBarAndroid } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedInput } from "@/components/ThemedInput";
 import { Accelerometer } from "expo-sensors";
 import * as Battery from "expo-battery";
 import { useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 import React from "react";
 
@@ -25,7 +25,6 @@ const ShakeToCharge = () => {
       const magnitude = Math.sqrt(x * x + y * y + z * z);
 
       if (magnitude > 1.78) {
-        // Adjust this threshold as needed
         setShakeDetected(true);
       }
     });
@@ -60,15 +59,18 @@ const ShakeToCharge = () => {
               backgroundColor:
                 batteryLevel > 80
                   ? "green"
-                  : batteryLevel > 40
+                  : batteryLevel > 20
                   ? "yellow"
                   : "red",
             },
           ]}
         />
       </ThemedView>
+      <Ionicons name="flash" size={36} color="black" style={styles.flashIcon} />
       {batteryLevel === 100 && (
-        <ThemedText style={[styles.text, {marginTop: 20}]}>Fully Charged!</ThemedText>
+        <ThemedText style={[styles.text, { marginTop: 20 }]}>
+          Fully Charged!
+        </ThemedText>
       )}
     </ThemedView>
   );
@@ -87,10 +89,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   progressBar: {
-    width: "80%",
-    height: 20,
+    width: "65%",
+    height: 100,
     borderRadius: 10,
     overflow: "hidden",
     backgroundColor: "#ddd",
+  },
+  flashIcon: {
+    position: "absolute",
+    zIndex: 100,
+    top: 425,
   },
 });
