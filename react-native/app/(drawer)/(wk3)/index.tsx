@@ -1,13 +1,15 @@
 import React from "react";
 import {
-  View,
-  TextInput,
-  FlatList,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
   SafeAreaView,
+  StyleSheet,
+  TouchableOpacity,
 } from "react-native";
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedInput } from "@/components/ThemedInput";
@@ -29,8 +31,7 @@ const imageData = generateImageData();
 
 const PhotoGalleryScreen = () => {
   const router = useRouter();
-  const [filteredData, setFilteredData] =
-    React.useState<ImageData[]>(imageData);
+  const [filteredData, setFilteredData] = React.useState<ImageData[]>(imageData);
   const [searchTerm, setSearchTerm] = React.useState<string>("");
 
   const handleSearch = (text: string) => {
@@ -48,9 +49,42 @@ const PhotoGalleryScreen = () => {
     });
   };
 
+  // Reanimated Hooks for scroll and animation
+  const marginVertical = useSharedValue(2);
+  const rotation = useSharedValue(0); // New shared value for rotation
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      const newMargin = 2 + event.contentOffset.y / 30;
+      if (newMargin < 2) {
+        marginVertical.value = 2;
+      } else if (newMargin > 20) {
+        marginVertical.value = 20;
+      } else {
+        marginVertical.value = newMargin;
+      }
+
+      // Update the rotation based on scroll position
+      rotation.value = withTiming(event.contentOffset.y / 100, { duration: 200 });
+    },
+  });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      marginVertical: marginVertical.value,
+      transform: [
+        { rotate: `${rotation.value}rad` }, // Apply rotation based on the scroll
+      ],
+    };
+  });
+
   const renderItem = ({ item }: { item: ImageData }) => (
     <TouchableOpacity onPress={() => handleImagePress(item)}>
-      <Image source={{ uri: item.url }} style={styles.imageThumbnail} />
+      <Animated.Image
+        sharedTransitionTag={`tag-${item.url}`}
+        source={{ uri: item.url }}
+        style={[styles.imageThumbnail, animatedStyle]}
+      />
     </TouchableOpacity>
   );
 
@@ -63,12 +97,14 @@ const PhotoGalleryScreen = () => {
           value={searchTerm}
           onChangeText={handleSearch}
         />
-        <FlatList
+        <Animated.FlatList
           data={filteredData}
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
           numColumns={3}
           contentContainerStyle={styles.grid}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16} // Ensures smooth scroll events
         />
       </ThemedView>
     </SafeAreaView>
@@ -98,6 +134,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     margin: 5,
+    borderRadius: 10,
   },
 });
 
