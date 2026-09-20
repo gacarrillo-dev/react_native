@@ -32,29 +32,40 @@ const BarcodeScanner = () => {
   }) => {
     setScanned(true);
     try {
-      const response = await fetch(data + ".json"); 
-      if (response.ok) {
-        const productData = await response.json();
+      const response = await fetch(data); 
+      const responseText = await response.text(); // Get raw text response
+  
+      if (response.ok && response.headers.get("Content-Type")?.includes("application/json")) {
+        const productData = JSON.parse(responseText); // Parse JSON if valid
+        console.log("Product Data:", productData); // For debugging
+  
+        // Alert showing only the URL (string)
         Alert.alert("Product URL", `Scanned URL: ${data}`, [
           { text: "OK", onPress: () => setScanned(false) },
         ]);
+  
+        // Navigate and pass product data to another screen
         router.push({
           pathname: '/(drawer)/(wk5)/(scanner)/details',
           params: {
-            productData: productData,
+            productData: JSON.stringify(productData),
           },
         });
       } else {
-        Alert.alert("Error", "Failed to fetch product data.", [
+        Alert.alert("Error", "Failed to fetch product data or response is not JSON.", [
           { text: "OK", onPress: () => setScanned(false) },
         ]);
       }
     } catch (error) {
+      console.error("Error:", error); // Log error for debugging
       Alert.alert("Error", "An error occurred while fetching product data.", [
         { text: "OK", onPress: () => setScanned(false) },
       ]);
     }
   };
+  
+  
+  
 
   return (
     <ThemedView style={styles.container}>
